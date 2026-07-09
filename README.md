@@ -2,9 +2,9 @@
 
 # UX Pilot MCP
 
-**Generate UI designs and wireframes from natural language, right inside your AI tools.**
+**Work directly inside UX Pilot from Claude, ChatGPT, Cursor, Codex, and other MCP clients.**
 
-Connect [UX Pilot](https://uxpilot.ai) to Cursor, Claude, Codex, VS Code, Windsurf, and any other MCP-compatible client.
+Bring AI-generated work into [UX Pilot](https://uxpilot.ai), organize it, review and version it, build prototypes, then switch back to UX Pilot AI for deeper product-aware generation.
 
 [![MCP](https://img.shields.io/badge/MCP-2025--11--25-000000.svg)](https://modelcontextprotocol.io/specification)
 [![Website](https://img.shields.io/badge/uxpilot.ai-6C4CF1.svg)](https://uxpilot.ai)
@@ -13,61 +13,90 @@ Connect [UX Pilot](https://uxpilot.ai) to Cursor, Claude, Codex, VS Code, Windsu
 
 ---
 
-The UX Pilot MCP server lets AI clients generate and iterate on UX designs through natural language. Ask your assistant to "generate a dashboard wireframe" and get back a real UX Pilot design with a shareable URL.
+The UX Pilot MCP server connects any MCP-compatible AI client to your UX Pilot workspace. Your assistant can create workstreams and pages, import HTML or live URLs as designs, run UX and accessibility reviews, manage versions and comments, and generate React prototypes, all inside UX Pilot.
 
-The server is hosted by UX Pilot. This repository documents how to connect to it and what tools it exposes. No server code lives here, so there is nothing to build or run locally.
+The server is hosted by UX Pilot. This repository documents how to connect to it and what it exposes. There is no server code here to build or run.
 
 - **Server URL:** `https://mcp.uxpilot.net/mcp`
 - **Transport:** Streamable HTTP (POST)
 - **Protocol:** MCP 2025-11-25 (JSON-RPC 2.0)
-- **Auth:** Native OAuth sign-in, or `Authorization: Bearer` API key
+- **Auth:** Native OAuth sign-in (recommended), or `Authorization: Bearer` API key fallback
+- **Tools:** 77
 
 ## Authentication
-
-You can connect in one of two ways.
 
 ### Native sign-in (recommended)
 
 If your AI tool shows a UX Pilot sign-in or authorization screen, choose that flow. You log in with your UX Pilot account, review the requested access, and approve the connection. No API key to copy or paste, and access stays tied to your account and plan.
 
-### API key
+### API key fallback
 
-For clients that do not yet support native sign-in, generate a key from the **API Keys** tab in your UX Pilot workspace and send it as a bearer token:
+For clients that only support static headers, generate a key from the **API Keys** tab in your UX Pilot workspace and send it as a bearer token:
 
 ```
 Authorization: Bearer ep_your_api_key
 ```
 
-> Enterprise workspaces: your workspace admin manages MCP/API keys. Ask an admin to generate a key if you do not see the API Keys tab.
+> Enterprise workspaces: your admin manages MCP/API keys. Keep the key private and rotate it if access changes.
 
 ## Setup
 
-Replace `ep_your_api_key` with your real key in each snippet below.
+Prefer native sign-in wherever the client supports it. Use the API key config as a fallback. Replace `ep_your_api_key` with your real key.
 
 <details open>
-<summary><b>Claude Code</b></summary>
+<summary><b>Claude</b></summary>
 
-Native sign-in:
+**Native connector (recommended):**
+1. Open Claude settings and add a custom connector / remote MCP server.
+2. Paste the server URL: `https://mcp.uxpilot.net/mcp`
+3. Choose the UX Pilot sign-in flow when Claude offers it and approve access.
+4. In a conversation, ask Claude to list UX Pilot tools.
 
-```bash
-claude mcp add --transport http uxpilot https://mcp.uxpilot.net/mcp
+**API key fallback (Claude Desktop, via `mcp-remote`):** edit `claude_desktop_config.json`
+(macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`,
+Windows: `%APPDATA%\Claude\claude_desktop_config.json`)
+
+```json
+{
+  "mcpServers": {
+    "uxpilot": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.uxpilot.net/mcp",
+        "--transport",
+        "http-only",
+        "--header",
+        "Authorization:${AUTH_HEADER}"
+      ],
+      "env": {
+        "AUTH_HEADER": "Bearer ep_your_api_key"
+      }
+    }
+  }
+}
 ```
 
-Then run `/mcp` and approve the UX Pilot connection.
+Requires Node.js. `mcp-remote` bridges stdio to Streamable HTTP.
 
-Or with an API key:
+</details>
 
-```bash
-claude mcp add --transport http uxpilot https://mcp.uxpilot.net/mcp \
-  --header "Authorization: Bearer ep_your_api_key"
-```
+<details>
+<summary><b>ChatGPT</b></summary>
+
+Use ChatGPT's custom connector / MCP support (Developer mode, availability depends on your plan):
+1. Open ChatGPT settings and add a custom connector / MCP server.
+2. Paste the server URL: `https://mcp.uxpilot.net/mcp`
+3. Complete the UX Pilot sign-in when prompted.
+4. Enable the connector in a chat and ask ChatGPT to list UX Pilot tools.
 
 </details>
 
 <details>
 <summary><b>Cursor</b></summary>
 
-Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project):
+Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project). Adding the URL alone triggers native sign-in if supported; the header is the API key fallback.
 
 ```json
 {
@@ -136,7 +165,7 @@ url = "https://mcp.uxpilot.net/mcp"
 bearer_token_env_var = "UXPILOT_API_KEY"
 ```
 
-Then export the key in your shell (raw key, no `Bearer ` prefix; Codex adds it):
+Then export the raw key (no `Bearer ` prefix; Codex adds it):
 
 ```bash
 export UXPILOT_API_KEY="ep_your_api_key"
@@ -145,9 +174,9 @@ export UXPILOT_API_KEY="ep_your_api_key"
 </details>
 
 <details>
-<summary><b>Claude Desktop / any stdio-only client</b></summary>
+<summary><b>Any MCP client</b></summary>
 
-Clients that do not yet speak Streamable HTTP can bridge through [`mcp-remote`](https://www.npmjs.com/package/mcp-remote):
+Clients that do not speak Streamable HTTP can bridge through [`mcp-remote`](https://www.npmjs.com/package/mcp-remote):
 
 ```json
 {
@@ -175,22 +204,34 @@ Clients that do not yet speak Streamable HTTP can bridge through [`mcp-remote`](
 
 ## Tools
 
-The server exposes five tools.
+77 tools, grouped by what they do.
 
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `generate_design` | Generate a single UI screen (wireframe or high-fidelity UI design). | `prompt`, `type` (`wireframe` \| `ui`), `platform` (`web` \| `mobile` \| `tablet`), `darkMode`, `deepDesign`, `designSystem` |
-| `generate_flow_text` | Suggest screen names and descriptions for a multi-screen app. | `prompt`, `screenCount` (2-10) |
-| `plan_design_flow` | Plan a multi-screen user flow and return the screens for review. Does not consume credits. | `prompt` |
-| `confirm_design_flow` | Generate multiple screens after the plan is confirmed. Consumes credits. | `prompt`, `type` (`wireframe` \| `ui`), `screens` (`[{name, description}]`), `designSystem` |
-| `retrieve_designs` | Retrieve the status, result, and URL of a previously generated design. | `designId` |
+### Organize UX Pilot work
+Create and maintain workstreams, pages, groups, and design metadata so outside AI work stays organized inside UX Pilot.
+
+`list_workstreams` `create_workstream` `create_page` `create_page_from_template` `toggle_page_bookmark` `create_group` `move_group_to_page` `duplicate_design` `move_design_to_page` `archive_design`
+
+### Bring in external AI output
+Import HTML, capture public URLs, place reference images, add durable canvas notes and diagrams from any MCP client.
+
+`import_html_design` `import_live_url` `add_canvas_assets` `upload_canvas_asset` `add_canvas_items` `update_canvas_assets` `list_design_collections` `get_design_collection` `generate_flowchart` `edit_flowchart` `list_diagrams` `create_diagram` `update_diagram` `delete_diagram` `delete_canvas_items` `delete_canvas_assets`
+
+### Review, version, collaborate
+Run UX reviews, save accessibility findings, compare versions, and turn AI feedback into visible UX Pilot comments.
+
+`run_ux_review` `get_review_status` `apply_ux_review_fixes` `save_accessibility_report` `apply_accessibility_fixes` `compare_review_scores` `apply_persona_audit_fixes` `update_comment` `delete_comment` `update_comment_reply` `delete_comment_reply` `create_version_from_comments` `create_design_version` `compare_design_versions`
+
+### Prototype and publish
+Generate React prototypes from designs, edit safely with child versions, rebuild, and publish previews.
+
+`generate_react_prototype` `edit_react_prototype` `build_react_prototype` `publish_prototype`
 
 ## Quick start
 
-1. Use native sign-in if your client offers it. Otherwise open the **API Keys** tab in UX Pilot and generate a key.
-2. Copy the config snippet for your client above.
-3. Replace `ep_your_api_key` with your real key, then restart the client.
-4. Ask your assistant: *"Generate a dashboard wireframe with UX Pilot."*
+1. Pick the AI client you want to use with UX Pilot.
+2. Use the native sign-in steps above with the server URL.
+3. If your client needs static headers, generate an API key and replace `ep_your_api_key` in the fallback config.
+4. Ask your assistant: *"Create a UX Pilot page, import this HTML as a design, then run a UX review."*
 
 ## Support
 
