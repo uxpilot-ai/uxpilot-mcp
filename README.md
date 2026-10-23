@@ -21,7 +21,7 @@ The server is hosted by UX Pilot. This repository documents how to connect to it
 - **Transport:** Streamable HTTP (POST)
 - **Protocol:** MCP 2025-11-25 (JSON-RPC 2.0)
 - **Auth:** Native OAuth sign-in (recommended), or `Authorization: Bearer` API key fallback
-- **Tools:** 77
+- **Tools:** 87
 
 ## Authentication
 
@@ -204,13 +204,14 @@ Clients that do not speak Streamable HTTP can bridge through [`mcp-remote`](http
 
 ## Tools
 
-77 tools, grouped by what they do. Tools marked **· credits** consume account credits; credit-consuming and destructive actions require explicit confirmation.
+87 tools, grouped by what they do. Tools marked **· credits** consume account credits; credit-consuming and destructive actions require explicit confirmation.
 
 <details open>
-<summary><b>Discover and inspect (12)</b></summary>
+<summary><b>Discover and inspect (13)</b></summary>
 
 | Tool | Description |
 |------|-------------|
+| `search_designs` | Find existing HTML designs and React projects by keyword, title, prompt, page name, or pageId |
 | `list_workstreams` | List your workstreams/folders with page summaries |
 | `list_pages` | List your pages with URLs, counts, and thumbnails |
 | `get_page_context` | Get a page's groups, designs, canvas, and comments |
@@ -258,11 +259,28 @@ Clients that do not speak Streamable HTTP can bridge through [`mcp-remote`](http
 
 | Tool | Description |
 |------|-------------|
-| `generate_design` | Generate one screen from a prompt **· credits** |
-| `plan_design_flow` | Plan a multi-screen flow for review (no credits) |
-| `confirm_design_flow` | Generate the confirmed multi-screen flow **· credits** |
-| `get_generation_status` | Poll generation, import, and build status |
-| `retrieve_designs` | Poll status/URLs/HTML for designs (legacy) |
+| `start_design_agent` | Create or change screens, whole flows, or a new React app from a brief; runs in the background **· credits** |
+| `get_agent_job` | Poll an agent run and show its progress until it completes |
+| `stop_agent_job` | Stop an agent run that is still in progress (finished screens are kept) |
+| `get_generation_status` | Poll generation, import, and React build status |
+| `retrieve_designs` | Poll status/URLs/HTML for designs (legacy, for older clients) |
+
+</details>
+
+<details>
+<summary><b>Edit designs and React code yourself (7)</b></summary>
+
+These edits run without UX Pilot AI and consume no credits.
+
+| Tool | Description |
+|------|-------------|
+| `patch_design_html` | Apply small, exact edits (text, classes, styles, attributes) to a design's HTML |
+| `edit_design_html` | Save full replacement HTML for an existing design |
+| `list_react_projects` | List your React apps/prototypes, with keyword filtering |
+| `list_react_project_files` | List a React app's source files |
+| `read_react_project_file` | Read one source file (with a hash for safe edits) |
+| `search_react_project_files` | Search a React app's code for components, routes, classes, or copy |
+| `edit_react_project_files` | Save code edits as a new version and queue a build/publish |
 
 </details>
 
@@ -290,7 +308,7 @@ Clients that do not speak Streamable HTTP can bridge through [`mcp-remote`](http
 </details>
 
 <details>
-<summary><b>Review, audit, and accessibility (8)</b></summary>
+<summary><b>Review, audit, and accessibility (10)</b></summary>
 
 | Tool | Description |
 |------|-------------|
@@ -302,6 +320,8 @@ Clients that do not speak Streamable HTTP can bridge through [`mcp-remote`](http
 | `save_accessibility_report` | Save an external axe-style a11y report |
 | `apply_accessibility_fixes` | Apply a11y violations as a child version **· credits** |
 | `compare_review_scores` | Compare before/after review scores (read-only) |
+| `generate_heatmap` | Predict where attention lands on a design (heatmap overlay) **· credits** |
+| `generate_gaze_flow` | Predict the order people scan a design (gaze-flow overlay) **· credits** |
 
 </details>
 
@@ -331,7 +351,7 @@ Clients that do not speak Streamable HTTP can bridge through [`mcp-remote`](http
 | Tool | Description |
 |------|-------------|
 | `generate_react_prototype` | Generate a React app from designs **· credits** |
-| `edit_react_prototype` | Edit an existing prototype |
+| `edit_react_prototype` | Change an existing React app with UX Pilot AI **· credits** |
 | `build_react_prototype` | Queue a build/publish refresh for a prototype |
 | `publish_prototype` | Publish a prototype as a hosted URL |
 | `publish_design_preview` | Publish a design's HTML as a hosted preview **· credits** |
