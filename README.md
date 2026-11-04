@@ -6,7 +6,7 @@
 
 Your AI builds screens live on the [UX Pilot](https://uxpilot.ai) canvas, or hands the brief to UX Pilot's own design agent. Then it reviews, versions and ships the work: React prototypes, preview links, videos and media.
 
-[![MCP](https://img.shields.io/badge/MCP-2025--11--25-000000.svg)](https://modelcontextprotocol.io/specification)
+[![MCP](https://img.shields.io/badge/MCP-2025--11--25-000000.svg)](https://modelcontextprotocol.io/specification/2025-11-25)
 [![Website](https://img.shields.io/badge/uxpilot.ai-6C4CF1.svg)](https://uxpilot.ai/mcp)
 
 </div>
@@ -124,7 +124,7 @@ Use ChatGPT's custom connector / MCP support (Developer mode, availability depen
 <details>
 <summary><b>Cursor</b></summary>
 
-Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project). Adding the URL alone triggers native sign-in if supported; the header is the API key fallback.
+Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project). For native sign-in, add only the `url`. Keep the `headers` block only for the API key fallback.
 
 ```json
 {
@@ -244,25 +244,25 @@ Clients that do not speak Streamable HTTP can bridge through [`mcp-remote`](http
 | `stop_job` | Stop a design, React or video run | | |
 | `edit` | Change content with no AI and no credits: patch a screen's HTML one section at a time, replace it, save a version, make a version from comments, edit React files or a diagram | patch, replace, save_version, version_from_comments, react_files, diagram | |
 | `manage` | Organize, never delete: pages, templates, bookmarks, folders, groups, screens, canvas notes and shapes, images, diagrams, comments and replies, accessibility reports | create_page, page_from_template, update_page, bookmark_page, move_page, create_workstream, update_workstream, create_group, update_group, save_group, move_group, duplicate_design, move_design, update_design, save_design, add_items, update_items, update_assets, create_diagram, comment, reply, update_comment, update_reply, resolve_comment, resolve_comments, accessibility_report | |
-| `import` | Bring things in: your HTML as a new screen (free), a live URL, images by URL or upload, a design system from code, a repository, a website or tokens | html, url, assets, upload, design_system | Credits (url, or html with AI refine) |
+| `import` | Bring things in: your HTML as a new screen (free), a live URL, images by URL or upload, a design system from code, a repository, a website or tokens | html, url, assets, upload, design_system | Credits (url, html with AI refine, or a design system from code, a repository or a website; tokens are free) |
 | `delete` | Delete pages, folders, groups, canvas items, images, diagrams, comments and replies, or archive a screen | page, workstream, group, design, canvas_items, canvas_assets, diagram, comment, reply | Always |
-| `design` | UX Pilot's AI: the design agent for screens, flows or a new React app on the standard, pro or ultra tier, screens into a React app, React changes from a prompt, flowcharts | agent, react, react_edit, flowchart, flowchart_edit | Credits |
+| `design` | UX Pilot's AI: the design agent for screens, flows or a new React app on the standard, pro or ultra tier, screens into a React app, React changes from a prompt, flowcharts | agent, react, react_edit, flowchart, flowchart_edit | Credits (flowcharts are free) |
 | `make_video` | Make or change a video from a brief: product reel, ad, explainer, social clip or logo animation, in 16:9, 9:16 or 1:1 | | Credits |
 | `generate_media` | Make media for a page: images, image edits, image processing, voiceovers, music, sound effects | image, edit_image, process_image, voiceover, music, sound_effect | Credits |
 | `review` | Review a screen, raw HTML or a live URL: UX review, persona review, attention heatmap, gaze flow (these two also take a screenshot). `apply: true` fixes ux, persona or accessibility issues as a new version | ux, persona, heatmap, gaze_flow, accessibility | Credits (a persona review is free) |
-| `export` | Export a video as MP4, WebM or GIF, publish a public preview link, publish or rebuild a React app | video, preview, prototype, react_build | Credits or publishing |
+| `export` | Export a video as MP4, WebM or GIF, publish a public preview link, publish or rebuild a React app | video, preview, prototype, react_build | Credits for a preview link or a React app publish; a rebuild asks first; video export is free |
 
 ### Confirmation
 
-Calls that spend credits, publish or delete never run on the AI's word alone:
+Calls that spend credits, publish or delete stop and ask first:
 
 1. The first call answers with a summary and a `confirmationToken` instead of running.
 2. Your AI tells you what will happen and asks.
-3. If you agree, it calls again with the same params plus `confirmed: true` and the token. A token works once, for that exact call, and expires after 15 minutes.
+3. If you agree, it calls again with the same params plus `confirmed: true` and the token. The token is tied to that exact call and expires after 15 minutes.
 
 ### Upgrading from 2.x
 
-Version 2.x listed 87 separate tools, such as `search_designs`, `start_design_agent` and `patch_design_html`. Each one is now an action of a 3.0 tool. For example, `search_designs` is `find` with kind `designs`, `start_design_agent` is `design` with action `agent`, and `patch_design_html` is `edit` with action `patch`. The 2.x tool list is still served at `https://mcp.uxpilot.net/mcp?toolset=legacy` for now, and it will be removed in a later release.
+Version 2.x listed 87 separate tools, such as `search_designs`, `start_design_agent` and `patch_design_html`. Nearly all of them are now actions of a 3.0 tool, and `guide({ topic: "names" })` maps every old name to its new call. For example, `search_designs` is `find` with kind `designs`, `start_design_agent` is `design` with action `agent`, and `patch_design_html` is `edit` with action `patch`. The old tool list is still served at `https://mcp.uxpilot.net/mcp?toolset=legacy` for now, and it will be removed in a later release.
 
 ## Quick start
 
@@ -280,4 +280,4 @@ Version 2.x listed 87 separate tools, such as `search_designs`, `start_design_ag
 - Product and account help: [uxpilot.ai](https://uxpilot.ai)
 - MCP overview: [uxpilot.ai/mcp](https://uxpilot.ai/mcp)
 - Issues with this integration: open an [issue](https://github.com/uxpilot-ai/uxpilot-mcp/issues)
-- MCP specification: [modelcontextprotocol.io](https://modelcontextprotocol.io/specification)
+- MCP specification: [modelcontextprotocol.io](https://modelcontextprotocol.io/specification/2025-11-25)
