@@ -8,6 +8,7 @@ Your AI builds screens live on the [UX Pilot](https://uxpilot.ai) canvas, or han
 
 [![MCP](https://img.shields.io/badge/MCP-2025--11--25-000000.svg)](https://modelcontextprotocol.io/specification/2025-11-25)
 [![Website](https://img.shields.io/badge/uxpilot.ai-6C4CF1.svg)](https://uxpilot.ai/mcp)
+[![MCP Badge](https://lobehub.com/badge/mcp/uxpilot-ai-uxpilot-mcp)](https://lobehub.com/mcp/uxpilot-ai-uxpilot-mcp)
 
 </div>
 
