@@ -2,18 +2,18 @@
 
 # UX Pilot MCP
 
-**Work directly inside UX Pilot from Claude, ChatGPT, Cursor, Codex, and other MCP clients.**
+**Design, edit and review in UX Pilot from Claude, ChatGPT, Cursor, Codex, and other MCP clients.**
 
-Bring AI-generated work into [UX Pilot](https://uxpilot.ai), organize it, review and version it, build prototypes, then switch back to UX Pilot AI for deeper product-aware generation.
+Your AI builds screens live on the [UX Pilot](https://uxpilot.ai) canvas, or hands the brief to UX Pilot's own design agent. Then it reviews, versions and ships the work: React prototypes, preview links, videos and media.
 
-[![MCP](https://img.shields.io/badge/MCP-2025--11--25-000000.svg)](https://modelcontextprotocol.io/specification)
-[![Website](https://img.shields.io/badge/uxpilot.ai-6C4CF1.svg)](https://uxpilot.ai)
+[![MCP](https://img.shields.io/badge/MCP-2025--11--25-000000.svg)](https://modelcontextprotocol.io/specification/2025-11-25)
+[![Website](https://img.shields.io/badge/uxpilot.ai-6C4CF1.svg)](https://uxpilot.ai/mcp)
 
 </div>
 
 ---
 
-The UX Pilot MCP server connects any MCP-compatible AI client to your UX Pilot workspace. Your assistant can create workstreams and pages, import HTML or live URLs as designs, run UX and accessibility reviews, manage versions and comments, and generate React prototypes, all inside UX Pilot.
+The UX Pilot MCP server connects any MCP-compatible AI client to your UX Pilot workspace. Version 3.0 has 15 general tools. Each one covers a kind of work (find, read, edit, review, export and so on), and you choose the action inside the tool. That keeps the tool list short and leaves more of your AI's context for the work.
 
 The server is hosted by UX Pilot. This repository documents how to connect to it and what it exposes. There is no server code here to build or run.
 
@@ -21,7 +21,28 @@ The server is hosted by UX Pilot. This repository documents how to connect to it
 - **Transport:** Streamable HTTP (POST)
 - **Protocol:** MCP 2025-11-25 (JSON-RPC 2.0)
 - **Auth:** Native OAuth sign-in (recommended), or `Authorization: Bearer` API key fallback
-- **Tools:** 87
+- **Tools:** 15 (version 3.0)
+- **Free plan:** connect with a free UX Pilot account and get 50 actions a week
+
+## What your AI can do
+
+- **Design on the canvas, live.** Your AI places a screen as HTML, then builds it one section at a time while you watch it appear on the open canvas. Each step comes back with a picture of the result, and design checks point out problems with fixes.
+- **Run UX Pilot's design agent.** Hand a brief to UX Pilot's own agent for screens, whole flows or a React app, on the standard, pro or ultra tier. Or mix the two: the agent drafts and your AI refines.
+- **Review.** UX reviews, persona reviews, attention heatmaps and gaze flow, on a UX Pilot screen, raw HTML or a live URL. Heatmaps and gaze flow also take a screenshot. Fixes land as a new version.
+- **Make videos and media.** Product reels, ads, explainers, social clips and logo animations, exported as MP4, WebM or GIF. Images, image edits, voiceovers, music and sound effects.
+- **Use your design system.** Import one from code, a repository, a website or tokens, then design on brand with its guide.
+- **Ship.** Turn screens into a React app, edit its files, publish it, or share a public preview link.
+- **Organize.** Pages, folders, groups, versions, canvas notes, diagrams and comments.
+
+## Free plan
+
+Free UX Pilot accounts can connect and use every tool:
+
+- 50 actions a week that write or run something (imports, edits, organizing, designs, reviews, media, videos). Reading, searching, checking jobs and stopping runs are not counted. The week resets Monday 00:00 UTC.
+- Design runs use the standard tier. Some features need a paid plan, the same as in the app. When one does, the tool says what is needed and links to the plans.
+- AI runs spend credits, as they do in the app.
+
+Paid plans have no weekly action limit. See [uxpilot.ai/plans](https://uxpilot.ai/plans).
 
 ## Authentication
 
@@ -47,10 +68,17 @@ Prefer native sign-in wherever the client supports it. Use the API key config as
 <summary><b>Claude</b></summary>
 
 **Native connector (recommended):**
-1. Open Claude settings and add a custom connector / remote MCP server.
-2. Paste the server URL: `https://mcp.uxpilot.net/mcp`
-3. Choose the UX Pilot sign-in flow when Claude offers it and approve access.
-4. In a conversation, ask Claude to list UX Pilot tools.
+1. Open Claude settings, go to Connectors, and pick **UX Pilot** from the directory. Or add a custom connector with the server URL: `https://mcp.uxpilot.net/mcp`
+2. Sign in with your UX Pilot account and approve access.
+3. In a conversation, ask Claude to find your UX Pilot pages, or to design something on the canvas.
+
+**Claude Code:**
+
+```bash
+claude mcp add --transport http uxpilot https://mcp.uxpilot.net/mcp
+```
+
+Then run `/mcp` in Claude Code and sign in.
 
 **API key fallback (Claude Desktop, via `mcp-remote`):** edit `claude_desktop_config.json`
 (macOS: `~/Library/Application Support/Claude/claude_desktop_config.json`,
@@ -89,14 +117,14 @@ Use ChatGPT's custom connector / MCP support (Developer mode, availability depen
 1. Open ChatGPT settings and add a custom connector / MCP server.
 2. Paste the server URL: `https://mcp.uxpilot.net/mcp`
 3. Complete the UX Pilot sign-in when prompted.
-4. Enable the connector in a chat and ask ChatGPT to list UX Pilot tools.
+4. Enable the connector in a chat and ask ChatGPT to find your UX Pilot pages.
 
 </details>
 
 <details>
 <summary><b>Cursor</b></summary>
 
-Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project). Adding the URL alone triggers native sign-in if supported; the header is the API key fallback.
+Add to `~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (project). For native sign-in, add only the `url`. Keep the `headers` block only for the API key fallback.
 
 ```json
 {
@@ -204,171 +232,52 @@ Clients that do not speak Streamable HTTP can bridge through [`mcp-remote`](http
 
 ## Tools
 
-87 tools, grouped by what they do. Tools marked **· credits** consume account credits; credit-consuming and destructive actions require explicit confirmation.
+15 tools. Most take a `kind` or `action` that picks what to do, and a `params` object with that action's fields. Ask the server with `guide({ topic: "<tool>.<action>" })`, for example `guide({ topic: "edit.patch" })`, for an action's fields and an example.
 
-<details open>
-<summary><b>Discover and inspect (13)</b></summary>
+| Tool | What it does | `kind` / `action` | Needs your OK |
+|------|--------------|-------------------|---------------|
+| `find` | Find work: pages, folders, screens and React apps by keyword, themes, symbols, design systems, diagrams, React files and code | pages, workstreams, designs, react_projects, themes, symbols, design_systems, diagrams, react_files, react_code | |
+| `read` | Read one thing in full: a page with its canvas, layout or picture, a screen and its HTML, versions and diffs, a preview link, design checks, a design system and its guide, review scores, comments | page, design, designs, versions, version_diff, preview, checks, theme, symbol, design_system, design_system_guide, react_file, review_scores, comments | |
+| `catalog` | What you can pick from: design tiers, media models, review and export types, and what each paid call costs | tiers, media_models, media_kinds, reviews, exports, credits | |
+| `guide` | Short how-to docs: ways to design, the canvas, small steps, HTML, videos, React, design systems, reviews, the free plan, confirmations | `topic` | |
+| `get_job` | Follow a running job: design runs, React edits, videos, imports, reviews, video exports, design system imports | agent, generation, review, export, design_system_import | |
+| `stop_job` | Stop a design, React or video run | | |
+| `edit` | Change content with no AI and no credits: patch a screen's HTML one section at a time, replace it, save a version, make a version from comments, edit React files or a diagram | patch, replace, save_version, version_from_comments, react_files, diagram | |
+| `manage` | Organize, never delete: pages, templates, bookmarks, folders, groups, screens, canvas notes and shapes, images, diagrams, comments and replies, accessibility reports | create_page, page_from_template, update_page, bookmark_page, move_page, create_workstream, update_workstream, create_group, update_group, save_group, move_group, duplicate_design, move_design, update_design, save_design, add_items, update_items, update_assets, create_diagram, comment, reply, update_comment, update_reply, resolve_comment, resolve_comments, accessibility_report | |
+| `import` | Bring things in: your HTML as a new screen (free), a live URL, images by URL or upload, a design system from code, a repository, a website or tokens | html, url, assets, upload, design_system | Credits (url, html with AI refine, or a design system from code, a repository or a website; tokens are free) |
+| `delete` | Delete pages, folders, groups, canvas items, images, diagrams, comments and replies, or archive a screen | page, workstream, group, design, canvas_items, canvas_assets, diagram, comment, reply | Always |
+| `design` | UX Pilot's AI: the design agent for screens, flows or a new React app on the standard, pro or ultra tier, screens into a React app, React changes from a prompt, flowcharts | agent, react, react_edit, flowchart, flowchart_edit | Credits (flowcharts are free) |
+| `make_video` | Make or change a video from a brief: product reel, ad, explainer, social clip or logo animation, in 16:9, 9:16 or 1:1 | | Credits |
+| `generate_media` | Make media for a page: images, image edits, image processing, voiceovers, music, sound effects | image, edit_image, process_image, voiceover, music, sound_effect | Credits |
+| `review` | Review a screen, raw HTML or a live URL: UX review, persona review, attention heatmap, gaze flow (these two also take a screenshot). `apply: true` fixes ux, persona or accessibility issues as a new version | ux, persona, heatmap, gaze_flow, accessibility | Credits (a persona review is free) |
+| `export` | Export a video as MP4, WebM or GIF, publish a public preview link, publish or rebuild a React app | video, preview, prototype, react_build | Credits for a preview link or a React app publish; a rebuild asks first; video export is free |
 
-| Tool | Description |
-|------|-------------|
-| `search_designs` | Find existing HTML designs and React projects by keyword, title, prompt, page name, or pageId |
-| `list_workstreams` | List your workstreams/folders with page summaries |
-| `list_pages` | List your pages with URLs, counts, and thumbnails |
-| `get_page_context` | Get a page's groups, designs, canvas, and comments |
-| `get_design` | Get one design's details, preview URL, optional HTML |
-| `get_design_preview` | Get a design's preview/page URL and status (no HTML) |
-| `get_design_versions` | Get a design's version/parent family |
-| `list_design_collections` | List your custom design-system collections |
-| `get_design_collection` | Get a collection's assets, styles, and docs |
-| `list_themes` | List available brand/style themes |
-| `get_theme` | Get a theme's full JSON for on-brand output |
-| `list_symbols` | List reusable editor components/symbols |
-| `get_symbol` | Get a symbol's HTML/CSS content |
+### Confirmation
 
-</details>
+Calls that spend credits, publish or delete stop and ask first:
 
-<details>
-<summary><b>Organize your workspace (19)</b></summary>
+1. The first call answers with a summary and a `confirmationToken` instead of running.
+2. Your AI tells you what will happen and asks.
+3. If you agree, it calls again with the same params plus `confirmed: true` and the token. The token is tied to that exact call and expires after 15 minutes.
 
-| Tool | Description |
-|------|-------------|
-| `create_workstream` | Create a workstream/folder |
-| `update_workstream` | Rename or re-describe a workstream |
-| `delete_workstream` | Delete a workstream and detach its pages |
-| `create_page` | Create a blank page |
-| `create_page_from_template` | Create a page/group from a template |
-| `update_page` | Update page name, prompt, or AI context |
-| `delete_page` | Delete a page |
-| `move_page_to_workstream` | Move a page into or out of a folder |
-| `toggle_page_bookmark` | Bookmark or unbookmark a page |
-| `create_group` | Create a design group on a page |
-| `update_group` | Update a group's name, font, or designs |
-| `delete_group` | Delete a group and its designs |
-| `move_group_to_page` | Move a group and its designs to another page |
-| `set_group_saved` | Save or unsave a group to your library |
-| `duplicate_design` | Duplicate a design onto a page/group |
-| `move_design_to_page` | Move a design to another page/group |
-| `archive_design` | Archive and detach a design |
-| `update_design_metadata` | Update a design's title, prompt, position, size |
-| `set_design_saved` | Save or unsave a design to your library |
+### Upgrading from 2.x
 
-</details>
-
-<details>
-<summary><b>Generate with UX Pilot AI (5)</b></summary>
-
-| Tool | Description |
-|------|-------------|
-| `start_design_agent` | Create or change screens, whole flows, or a new React app from a brief; runs in the background **· credits** |
-| `get_agent_job` | Poll an agent run and show its progress until it completes |
-| `stop_agent_job` | Stop an agent run that is still in progress (finished screens are kept) |
-| `get_generation_status` | Poll generation, import, and React build status |
-| `retrieve_designs` | Poll status/URLs/HTML for designs (legacy, for older clients) |
-
-</details>
-
-<details>
-<summary><b>Edit designs and React code yourself (7)</b></summary>
-
-These edits run without UX Pilot AI and consume no credits.
-
-| Tool | Description |
-|------|-------------|
-| `patch_design_html` | Apply small, exact edits (text, classes, styles, attributes) to a design's HTML |
-| `edit_design_html` | Save full replacement HTML for an existing design |
-| `list_react_projects` | List your React apps/prototypes, with keyword filtering |
-| `list_react_project_files` | List a React app's source files |
-| `read_react_project_file` | Read one source file (with a hash for safe edits) |
-| `search_react_project_files` | Search a React app's code for components, routes, classes, or copy |
-| `edit_react_project_files` | Save code edits as a new version and queue a build/publish |
-
-</details>
-
-<details>
-<summary><b>Bring in external AI output (15)</b></summary>
-
-| Tool | Description |
-|------|-------------|
-| `import_html_design` | Import external HTML as a previewable design **· credits** |
-| `import_live_url` | Capture a public URL as a design **· credits** |
-| `add_canvas_assets` | Add URL-backed image/reference assets to a page |
-| `upload_canvas_asset` | Upload base64/data-URL images to a page |
-| `update_canvas_assets` | Update existing canvas assets and linked items |
-| `delete_canvas_assets` | Delete canvas assets |
-| `add_canvas_items` | Add sticky notes, annotations, and flow nodes |
-| `update_canvas_items` | Move, relabel, or restyle canvas items |
-| `delete_canvas_items` | Delete canvas items |
-| `generate_flowchart` | Generate a flowchart graph from a prompt |
-| `edit_flowchart` | Edit an existing flowchart from an instruction |
-| `list_diagrams` | List saved diagrams on a page |
-| `create_diagram` | Create a saved sitemap/journey/process diagram |
-| `update_diagram` | Update a diagram's metadata, nodes, or edges |
-| `delete_diagram` | Delete a diagram |
-
-</details>
-
-<details>
-<summary><b>Review, audit, and accessibility (10)</b></summary>
-
-| Tool | Description |
-|------|-------------|
-| `run_ux_review` | Run a UX review, persist findings as comments **· credits** |
-| `get_review_status` | Poll an async UX review job |
-| `apply_ux_review_fixes` | Apply review findings as a child version **· credits** |
-| `run_persona_audit` | Run a persona-based audit, persist findings |
-| `apply_persona_audit_fixes` | Apply persona findings as a child version **· credits** |
-| `save_accessibility_report` | Save an external axe-style a11y report |
-| `apply_accessibility_fixes` | Apply a11y violations as a child version **· credits** |
-| `compare_review_scores` | Compare before/after review scores (read-only) |
-| `generate_heatmap` | Predict where attention lands on a design (heatmap overlay) **· credits** |
-| `generate_gaze_flow` | Predict the order people scan a design (gaze-flow overlay) **· credits** |
-
-</details>
-
-<details>
-<summary><b>Versions and comments (12)</b></summary>
-
-| Tool | Description |
-|------|-------------|
-| `create_design_version` | Create a version preserving parent history |
-| `compare_design_versions` | Compare two designs/versions (metadata + HTML diff) |
-| `create_version_from_comments` | Create a child version from fixed HTML and comments |
-| `create_comment` | Comment on a page or anchored to a design/shape |
-| `update_comment` | Edit your comment's text, mentions, or position |
-| `delete_comment` | Delete a comment and its replies |
-| `reply_to_comment` | Reply to a comment thread |
-| `update_comment_reply` | Edit your reply |
-| `delete_comment_reply` | Delete a reply |
-| `resolve_comment` | Resolve or reopen a comment |
-| `resolve_comments_with_version_summary` | Reply to and resolve comments with a version summary |
-| `summarize_comments` | List and summarize page comments |
-
-</details>
-
-<details>
-<summary><b>Prototype and publish (5)</b></summary>
-
-| Tool | Description |
-|------|-------------|
-| `generate_react_prototype` | Generate a React app from designs **· credits** |
-| `edit_react_prototype` | Change an existing React app with UX Pilot AI **· credits** |
-| `build_react_prototype` | Queue a build/publish refresh for a prototype |
-| `publish_prototype` | Publish a prototype as a hosted URL |
-| `publish_design_preview` | Publish a design's HTML as a hosted preview **· credits** |
-
-</details>
-
-> Plus `request_action_confirmation`, a safety utility that mints a confirmation token for risky actions.
+Version 2.x listed 87 separate tools, such as `search_designs`, `start_design_agent` and `patch_design_html`. Nearly all of them are now actions of a 3.0 tool, and `guide({ topic: "names" })` maps every old name to its new call. For example, `search_designs` is `find` with kind `designs`, `start_design_agent` is `design` with action `agent`, and `patch_design_html` is `edit` with action `patch`. The old tool list is still served at `https://mcp.uxpilot.net/mcp?toolset=legacy` for now, and it will be removed in a later release.
 
 ## Quick start
 
 1. Pick the AI client you want to use with UX Pilot.
-2. Use the native sign-in steps above with the server URL.
+2. Add the server URL with the native sign-in steps above.
 3. If your client needs static headers, generate an API key and replace `ep_your_api_key` in the fallback config.
-4. Ask your assistant: *"Create a UX Pilot page, import this HTML as a design, then run a UX review."*
+4. Ask your assistant, for example:
+   - *"Design a pricing page for my app on the UX Pilot canvas, one section at a time."*
+   - *"Have UX Pilot's design agent make a 3-screen onboarding flow on the pro tier."*
+   - *"Run a UX review on my checkout screen in UX Pilot and fix what it finds."*
+   - *"Make a 15-second 9:16 product reel for my app and export it as MP4."*
 
 ## Support
 
 - Product and account help: [uxpilot.ai](https://uxpilot.ai)
+- MCP overview: [uxpilot.ai/mcp](https://uxpilot.ai/mcp)
 - Issues with this integration: open an [issue](https://github.com/uxpilot-ai/uxpilot-mcp/issues)
-- MCP specification: [modelcontextprotocol.io](https://modelcontextprotocol.io/specification)
+- MCP specification: [modelcontextprotocol.io](https://modelcontextprotocol.io/specification/2025-11-25)
